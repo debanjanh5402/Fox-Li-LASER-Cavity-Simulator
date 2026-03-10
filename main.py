@@ -21,7 +21,6 @@ from matplotlib.figure import Figure # type:ignore
 from matplotlib.gridspec import GridSpec # type:ignore
 from mpl_toolkits.axes_grid1 import make_axes_locatable # type:ignore
 
-# Import modularized logic
 from gain_processor import load_and_process_gain
 from physics_engine import _angspec_prop_core, _run_iteration_core
 
@@ -310,7 +309,6 @@ class FoxLiGUI(QWidget):
     def initialize_simulation(self):
         try:
             self.get_inputs()
-            #QMessageBox.information(self, "Initializing", "Compiling JAX functions (one-time step). Please wait...")
             QApplication.processEvents() 
 
             E0_dummy = self.E0
@@ -323,7 +321,6 @@ class FoxLiGUI(QWidget):
             )
             
             E0_next_dummy.block_until_ready()
-            #print("JAX compilation complete. Starting simulation loop.")
 
             key = jax.random.PRNGKey(42)
             key_amp, key_phase = jax.random.split(key)

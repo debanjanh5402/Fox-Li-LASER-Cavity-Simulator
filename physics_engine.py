@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import jax.numpy as jnp
 
 def _angspec_prop_core(u, dz, k_sq, four_pi_sq, f_sq_sum, N, p, wav):
