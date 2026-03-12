@@ -12,11 +12,12 @@ Unlike standard paraxial models, this physics engine utilizes the exact Angular 
 This codebase couples the core JAX-accelerated solver with a custom PyQt5 graphical interface, allowing for the real-time visualization and dynamic manipulation of complex resonator setups. 
 
 ### Authors
-* **Debanjan Halder**
-  Project Scientist, Computational Optics Laboratory, Optics & Photonics Centre (OPC)
-  Indian Institute of Technology, Delhi
+* **Debanjan Halder**  
+Project Scientist, Computational Optics Laboratory
+Optics & Photonics Centre (OPC), 
+Indian Institute of Technology, Delhi
 
-* **Prof. Kedar Khare**
-  Professor and Head, Optics & Photonics Centre (OPC)
-  Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (CeNSE)
-  Indian Institute of Technology, Delhi
+* **Prof. Kedar B. Khare**  
+Professor and Head, Optics & Photonics Centre (OPC)  
+Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (CeNSE)  
+Indian Institute of Technology, Delhi
