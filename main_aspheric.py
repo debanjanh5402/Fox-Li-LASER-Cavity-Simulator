@@ -51,7 +51,7 @@ class FoxLiGUI(QWidget):
         self.init_visual_tab(); self.init_simulation_tab(); self.init_results_tab()
         self.init_far_field_tab()
 
-        main_layout.addLayout(self.control_layout, 2); main_layout.addWidget(self.tabs, 8)
+        main_layout.addLayout(self.control_layout, 25); main_layout.addWidget(self.tabs, 75)
         self.setLayout(main_layout)
 
         self.simulation_timer = QTimer()
@@ -59,7 +59,7 @@ class FoxLiGUI(QWidget):
 
     def init_param_panel(self):
         self.control_layout = QVBoxLayout(); self.control_layout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
-        self.control_layout.addSpacing(20)
+        self.control_layout.addSpacing(10)
 
         self.inputs = {}
 
@@ -68,20 +68,62 @@ class FoxLiGUI(QWidget):
         simulation_label.setFont(font); simulation_label.setAlignment(Qt.AlignCenter)
         self.control_layout.addWidget(simulation_label); self.control_layout.addSpacing(10)
 
-        labels = ["Grid size (N)", "Wavelength (μm)", "Pixel size (μm)", "Propagation distance z (m)",
-                  "R1 (m)", "R2 (m)", "D1 (mm)", "D2 (mm)", "Max Iter"]
-        defaults = [1501, 1.315, 20.0, 1.212352, 
-                    5.8378044, 3.4378044, 20.0, 11.0, 500]
-        keys = ['N', 'wav', 'p', 'z', 'R1', 'R2', 'D1', 'D2', 'max_iter']
+        labels_general = ["Grid size (N)", "Wavelength (μm)", "Pixel size (μm)", "Propagation distance z (m)", "Max Iter"]
+        defaults_general = [1501, 1.315, 20.0, 1.212352, 500]
+        keys_general = ['N', 'wav', 'p', 'z', 'max_iter']
 
-        general_layout = QFormLayout(); general_layout.setLabelAlignment(Qt.AlignLeft); general_layout.setFormAlignment(Qt.AlignLeft)
+        general_layout = QFormLayout()
+        general_layout.setLabelAlignment(Qt.AlignLeft)
+        general_layout.setFormAlignment(Qt.AlignLeft)
 
-        for label, default, key in zip(labels, defaults, keys):
+        for label, default, key in zip(labels_general, defaults_general, keys_general):
             le = QLineEdit(str(default))
             self.inputs[key] = le
             general_layout.addRow(QLabel(label), le)
 
-        self.control_layout.addLayout(general_layout); self.control_layout.addSpacing(15)
+        self.control_layout.addLayout(general_layout)
+        self.control_layout.addSpacing(10)
+
+        mirror_label = QLabel("Mirror Parameters")
+        font = mirror_label.font(); font.setPointSize(15); font.setBold(True)
+        mirror_label.setFont(font); mirror_label.setAlignment(Qt.AlignCenter)
+        self.control_layout.addWidget(mirror_label); self.control_layout.addSpacing(10)
+
+        mirror_param_layout = QGridLayout()
+        mirror_param_layout.setAlignment(Qt.AlignCenter)
+        
+        mirror_param_layout.addWidget(QLabel("R1 (m)"), 0, 0)
+        le_r1 = QLineEdit("5.8378044")
+        self.inputs['R1'] = le_r1
+        mirror_param_layout.addWidget(le_r1, 0, 1)
+        
+        mirror_param_layout.addWidget(QLabel("R2 (m)"), 0, 2)
+        le_r2 = QLineEdit("3.4378044")
+        self.inputs['R2'] = le_r2
+        mirror_param_layout.addWidget(le_r2, 0, 3)
+
+        mirror_param_layout.addWidget(QLabel("D1 (mm)"), 1, 0)
+        le_d1 = QLineEdit("20.0")
+        self.inputs['D1'] = le_d1
+        mirror_param_layout.addWidget(le_d1, 1, 1)
+        
+        mirror_param_layout.addWidget(QLabel("D2 (mm)"), 1, 2)
+        le_d2 = QLineEdit("11.0")
+        self.inputs['D2'] = le_d2
+        mirror_param_layout.addWidget(le_d2, 1, 3)
+
+        mirror_param_layout.addWidget(QLabel("k1"), 2, 0)
+        le_k1 = QLineEdit("-1.0")
+        self.inputs['k01'] = le_k1
+        mirror_param_layout.addWidget(le_k1, 2, 1)
+        
+        mirror_param_layout.addWidget(QLabel("k2"), 2, 2)
+        le_k2 = QLineEdit("-1.03360")
+        self.inputs['k02'] = le_k2
+        mirror_param_layout.addWidget(le_k2, 2, 3)
+
+        self.control_layout.addLayout(mirror_param_layout)
+        self.control_layout.addSpacing(10)
 
         misalign_label = QLabel("Misalignment Parameters")
         font = misalign_label.font(); font.setPointSize(15); font.setBold(True)
@@ -109,7 +151,7 @@ class FoxLiGUI(QWidget):
             self.inputs[key] = le
             mirror_layout.addWidget(le, i, 3)
 
-        self.control_layout.addLayout(mirror_layout); self.control_layout.addSpacing(15)
+        self.control_layout.addLayout(mirror_layout); self.control_layout.addSpacing(10)
 
         gain_label = QLabel("Gain Profile"); gain_label.setFont(font); gain_label.setAlignment(Qt.AlignCenter)
         self.control_layout.addWidget(gain_label); self.control_layout.addSpacing(10)
@@ -122,7 +164,7 @@ class FoxLiGUI(QWidget):
         self.btn_browse_gain.clicked.connect(self.select_gain_file)
         self.gain_filepath_label = QLabel("No file selected."); self.gain_filepath_label.setWordWrap(True)
         gain_layout.addRow(self.btn_browse_gain, self.gain_filepath_label)
-        self.control_layout.addLayout(gain_layout); self.control_layout.addSpacing(20)
+        self.control_layout.addLayout(gain_layout); self.control_layout.addSpacing(10)
 
         self.btn_visualize = QPushButton("Visualize Setup"); self.btn_visualize.clicked.connect(self.visualize_setup)
         self.control_layout.addWidget(self.btn_visualize, alignment=Qt.AlignTop)
@@ -197,7 +239,9 @@ class FoxLiGUI(QWidget):
         self.D1 = float(self.inputs['D1'].text()) * 1e-3      
         self.D2 = float(self.inputs['D2'].text()) * 1e-3
         self.max_iter = int(self.inputs['max_iter'].text())
-        self.k = 2 * onp.pi / self.wav 
+        self.k01 = float(self.inputs['k01'].text())
+        self.k02 = float(self.inputs['k02'].text())
+        self.k = 2 * onp.pi / self.wav
 
         self.x1 = float(self.inputs['x1'].text()) * 1e-6      
         self.y1 = float(self.inputs['y1'].text()) * 1e-6      
@@ -227,13 +271,15 @@ class FoxLiGUI(QWidget):
         self.circ1 = jnp.zeros((self.N, self.N)); self.circ1 = self.circ1.at[self.x**2 + self.y**2 < (self.D1/2)**2].set(1)
         self.circ2 = jnp.zeros((self.N, self.N)); self.circ2 = self.circ2.at[self.x**2 + self.y**2 < (self.D2/2)**2].set(1)
         
-        quad1 = jnp.exp(-1j*self.k*((self.x - self.x1)**2 + (self.y - self.y1)**2)/self.R1)
-        tilt1 = jnp.exp(1j*self.k*(self.x*self.theta_x1 + self.y*self.theta_y1))
-        self.Mirror1 = quad1 * tilt1 * self.circ1
+        r21 = (self.x - self.x1)**2 + (self.y - self.y1)**2
+        sag1_phase = -2j * self.k * r21 / (self.R1 + jnp.sqrt(self.R1**2 - (1 + self.k01) * r21))
+        tilt1 = jnp.exp(1j * self.k * (self.x * self.theta_x1 + self.y * self.theta_y1))
+        self.Mirror1 = jnp.exp(sag1_phase) * tilt1 * self.circ1
         
-        quad2 = jnp.exp(+1j*self.k*((self.x - self.x2)**2 + (self.y - self.y2)**2)/self.R2)
-        tilt2 = jnp.exp(1j*self.k*(self.x*self.theta_x2 + self.y*self.theta_y2))
-        self.Mirror2 = quad2 * tilt2 * self.circ2
+        r22 = (self.x - self.x2)**2 + (self.y - self.y2)**2
+        sag2_phase = 2j * self.k * r22 / (self.R2 + jnp.sqrt(self.R2**2 - (1 + self.k02) * r22))
+        tilt2 = jnp.exp(1j * self.k * (self.x * self.theta_x2 + self.y * self.theta_y2))
+        self.Mirror2 = jnp.exp(sag2_phase) * tilt2 * self.circ2
         
         if self.gain_combo.currentText() == "Load from File..." and self.gain_filepath:
             gain_prof, raw_prof = load_and_process_gain(self.gain_filepath, onp.array(self.x), onp.array(self.y))
@@ -266,10 +312,12 @@ class FoxLiGUI(QWidget):
         
         self.visual_figure.subplots_adjust(wspace=0.4, hspace=0.5)
 
-        quad1_nominal = jnp.exp(-1j*self.k*((self.x)**2 + (self.y)**2)/self.R1)
-        Mirror1_nominal = quad1_nominal * self.circ1
-        quad2_nominal = jnp.exp(+1j*self.k*((self.x)**2 + (self.y)**2)/self.R2)
-        Mirror2_nominal = quad2_nominal * self.circ2
+        
+        r2_nom = self.x**2 + self.y**2
+        sag1_nom = -2j * self.k * r2_nom / (self.R1 + jnp.sqrt(self.R1**2 - (1 + self.k01) * r2_nom))
+        Mirror1_nominal = jnp.exp(sag1_nom) * self.circ1
+        sag2_nom = 2j * self.k * r2_nom / (self.R2 + jnp.sqrt(self.R2**2 - (1 + self.k02) * r2_nom))
+        Mirror2_nominal = jnp.exp(sag2_nom) * self.circ2
         
         def plot_phase(ax, data, title, circ_mask):
             ax.set_title(title, fontsize=8, fontweight='bold')
