@@ -13,10 +13,10 @@ This codebase couples the core JAX-accelerated solver with a custom PyQt5 graphi
 
 ### Authors
 * **DEBANJAN HALDER**
-* Project Scientist, Computational Optics Laboratory, Optics & Photonics Centre (OPC)
-* Indian Institute of Technology, Delhi
+  Project Scientist, Computational Optics Laboratory, Optics & Photonics Centre (OPC)
+  Indian Institute of Technology, Delhi
 
 * **Prof. Kedar Khare**
-* Professor and Head, Optics & Photonics Centre (OPC)
-* Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (CeNSE)
-* Indian Institute of Technology, Delhi
+  Professor and Head, Optics & Photonics Centre (OPC)
+  Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (CeNSE)
+  Indian Institute of Technology, Delhi
