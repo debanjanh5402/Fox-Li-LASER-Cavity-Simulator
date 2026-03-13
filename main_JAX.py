@@ -20,7 +20,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure 
 from matplotlib.gridspec import GridSpec 
 
-# Import from your optimized engine and viz files
 from gain_processor import load_and_process_gain
 from physics_engine import run_iteration_jax, calc_far_field_jax
 import viz_utils
@@ -302,8 +301,6 @@ class FoxLiGUIJAX(QWidget):
         self.four_pi_sq = 4 * onp.pi**2
         self.f_sq_sum = self.fx**2 + self.fy**2
         
-        # Optimized mathematical equivalent to your original .at[].set(1) method. 
-        # Gives exactly the same 0 and 1 mask without the heavy memory reallocation.
         r2_base = self.x**2 + self.y**2
         self.circ0 = jnp.where(r2_base < (self.N * self.p / 2)**2, 1.0, 0.0)
         self.circ1 = jnp.where(r2_base < (self.D1 / 2)**2, 1.0, 0.0)
@@ -348,7 +345,6 @@ class FoxLiGUIJAX(QWidget):
         sag2_nom = 2j * self.k * r2_nom / (self.R2 + jnp.sqrt(self.R2**2 - (1 + self.k02) * r2_nom))
         Mirror2_nominal = jnp.exp(sag2_nom) * self.circ2
         
-        # Pass pure NumPy arrays to matplotlib to prevent backend errors
         viz_utils.plot_setup(self.visual_figure, onp.array(Mirror1_nominal), onp.array(Mirror2_nominal), 
                              onp.array(self.Mirror1), onp.array(self.Mirror2), 
                              onp.array(self.circ1), onp.array(self.circ2), 
@@ -362,7 +358,6 @@ class FoxLiGUIJAX(QWidget):
             self.get_inputs()
             QApplication.processEvents() 
 
-            # The dummy run triggers the JAX JIT compilation
             E0_dummy = self.E0
             E0_next_dummy, E_out_dummy, intensity_dummy, phase_dummy = self._run_iteration_jax(
                 E0_dummy, self.Mirror1, self.Mirror2, self.exp_gain_profile, 

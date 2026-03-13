@@ -344,7 +344,6 @@ class FoxLiGUI(QWidget):
             self.get_inputs()
             QApplication.processEvents() 
 
-            # Standard NumPy executes eagerly; no JIT dummy-run is needed here.
             amp = np.random.uniform(size=(self.N, self.N))
             phase = np.random.uniform(size=(self.N, self.N))
             self.E0 = amp * np.exp(2j * np.pi * phase)
