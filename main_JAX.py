@@ -3,7 +3,7 @@ import sys
 import os
 import time
 os.environ['JAX_ENABLE_X64'] = 'True'
-import numpy as onp
+import numpy as np
 
 try:
     import jax          
@@ -17,11 +17,10 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit, QPushButt
                              QMessageBox, QTabWidget, QFileDialog, QInputDialog, QFormLayout, QComboBox) 
 from PyQt5.QtCore import Qt, QTimer 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
-from matplotlib.figure import Figure 
-from matplotlib.gridspec import GridSpec 
+from matplotlib.figure import Figure
 
 from gain_processor import load_and_process_gain
-from physics_engine import run_iteration_jax, calc_far_field_jax
+from physics_engine import run_iteration_jax, calc_far_field_jax, create_circle_jax, create_mirror_jax
 import viz_utils
 
 class FoxLiGUIJAX(QWidget):
@@ -275,7 +274,7 @@ class FoxLiGUIJAX(QWidget):
         self.max_iter = int(self.inputs['max_iter'].text())
         self.k01 = float(self.inputs['k01'].text())
         self.k02 = float(self.inputs['k02'].text())
-        self.k = 2 * onp.pi / self.wav
+        self.k = 2 * np.pi / self.wav
 
         self.x1 = float(self.inputs['x1'].text()) * 1e-6      
         self.y1 = float(self.inputs['y1'].text()) * 1e-6      
@@ -298,27 +297,22 @@ class FoxLiGUIJAX(QWidget):
         self.fy = fy_coords / self.p
         
         self.k_sq = self.k**2
-        self.four_pi_sq = 4 * onp.pi**2
+        self.four_pi_sq = 4 * np.pi**2
         self.f_sq_sum = self.fx**2 + self.fy**2
-        
-        r2_base = self.x**2 + self.y**2
-        self.circ0 = jnp.where(r2_base < (self.N * self.p / 2)**2, 1.0, 0.0)
-        self.circ1 = jnp.where(r2_base < (self.D1 / 2)**2, 1.0, 0.0)
-        self.circ2 = jnp.where(r2_base < (self.D2 / 2)**2, 1.0, 0.0)
-        
-        r21 = (self.x - self.x1)**2 + (self.y - self.y1)**2
-        sag1_phase = -2j * self.k * r21 / (self.R1 + jnp.sqrt(self.R1**2 - (1 + self.k01) * r21))
-        tilt1 = jnp.exp(1j * self.k * (self.x * self.theta_x1 + self.y * self.theta_y1))
-        self.Mirror1 = jnp.exp(sag1_phase) * tilt1 * self.circ1
-        
-        r22 = (self.x - self.x2)**2 + (self.y - self.y2)**2
-        sag2_phase = 2j * self.k * r22 / (self.R2 + jnp.sqrt(self.R2**2 - (1 + self.k02) * r22))
-        tilt2 = jnp.exp(1j * self.k * (self.x * self.theta_x2 + self.y * self.theta_y2))
-        self.Mirror2 = jnp.exp(sag2_phase) * tilt2 * self.circ2
+
+        self.circ0 = create_circle_jax(x_grid=self.x, y_grid=self.y, diameter=(self.N*self.p))
+        self.circ1, self.Mirror1 = create_mirror_jax(x_grid=self.x, y_grid=self.y, wav_num=self.k,
+                                                     diameter=self.D1, ROC=self.R1, kappa=self.k01,
+                                                     xoff=self.x1, yoff=self.y1, angx=self.theta_x1, angy=self.theta_y1,
+                                                     left_or_right_mirror="left", return_circ=True)
+        self.circ2, self.Mirror2 = create_mirror_jax(x_grid=self.x, y_grid=self.y, wav_num=self.k,
+                                                     diameter=self.D2, ROC=self.R2, kappa=self.k02,
+                                                     xoff=self.x2, yoff=self.y2, angx=self.theta_x2, angy=self.theta_y2,
+                                                     left_or_right_mirror="right", return_circ=True)
         
         if self.gain_combo.currentText() == "Load from File..." and self.gain_filepath:
             time_start = time.perf_counter()
-            gain_prof, raw_prof = load_and_process_gain(self.gain_filepath, onp.array(self.x), onp.array(self.y))
+            gain_prof, raw_prof = load_and_process_gain(self.gain_filepath, np.array(self.x), np.array(self.y))
             time_end = time.perf_counter()
             print(f"Time duration for processing gain: {time_end-time_start} seconds")
             self.exp_gain_profile = jnp.array(gain_prof)
@@ -329,7 +323,7 @@ class FoxLiGUIJAX(QWidget):
 
         key = jax.random.PRNGKey(42)
         key_amp, key_phase = jax.random.split(key)
-        self.E0 = jax.random.uniform(key_amp, (self.N, self.N), dtype=jnp.float64) * jnp.exp(1j * 2 * onp.pi * jax.random.uniform(key_phase, (self.N, self.N), dtype=jnp.float64))
+        self.E0 = jax.random.uniform(key_amp, (self.N, self.N), dtype=jnp.float64) * jnp.exp(1j * 2 * np.pi * jax.random.uniform(key_phase, (self.N, self.N), dtype=jnp.float64))
         self.iter = 0
 
     def visualize_setup(self):
@@ -339,16 +333,21 @@ class FoxLiGUIJAX(QWidget):
             QMessageBox.critical(self, "Input Error", f"Error reading parameters: {e}")
             return
         
-        r2_nom = self.x**2 + self.y**2
-        sag1_nom = -2j * self.k * r2_nom / (self.R1 + jnp.sqrt(self.R1**2 - (1 + self.k01) * r2_nom))
-        Mirror1_nominal = jnp.exp(sag1_nom) * self.circ1
-        sag2_nom = 2j * self.k * r2_nom / (self.R2 + jnp.sqrt(self.R2**2 - (1 + self.k02) * r2_nom))
-        Mirror2_nominal = jnp.exp(sag2_nom) * self.circ2
+        Mirror1_nominal = create_mirror_jax(x_grid=self.x, y_grid=self.y, wav_num=self.k,
+                                            diameter=self.D1, ROC=self.R1, kappa=self.k01, 
+                                            xoff=0.0, yoff=0.0, angx=0.0, angy=0.0,
+                                            left_or_right_mirror="left",
+                                            return_circ=False)
+        Mirror2_nominal = create_mirror_jax(x_grid=self.x, y_grid=self.y, wav_num=self.k,
+                                            diameter=self.D2, ROC=self.R2, kappa=self.k02, 
+                                            xoff=0.0, yoff=0.0, angx=0.0, angy=0.0,
+                                            left_or_right_mirror="right",
+                                            return_circ=False)
         
-        viz_utils.plot_setup(self.visual_figure, onp.array(Mirror1_nominal), onp.array(Mirror2_nominal), 
-                             onp.array(self.Mirror1), onp.array(self.Mirror2), 
-                             onp.array(self.circ1), onp.array(self.circ2), 
-                             self.raw_gain_profile, onp.array(self.exp_gain_profile))
+        viz_utils.plot_setup(self.visual_figure, np.array(Mirror1_nominal), np.array(Mirror2_nominal), 
+                             np.array(self.Mirror1), np.array(self.Mirror2), 
+                             np.array(self.circ1), np.array(self.circ2), 
+                             self.raw_gain_profile, np.array(self.exp_gain_profile))
         
         self.visual_canvas.draw()
         self.tabs.setCurrentWidget(self.tab_visual)
@@ -370,7 +369,7 @@ class FoxLiGUIJAX(QWidget):
 
             key = jax.random.PRNGKey(42)
             key_amp, key_phase = jax.random.split(key)
-            self.E0 = jax.random.uniform(key_amp, (self.N, self.N), dtype=jnp.float64) * jnp.exp(1j * 2 * onp.pi * jax.random.uniform(key_phase, (self.N, self.N), dtype=jnp.float64))
+            self.E0 = jax.random.uniform(key_amp, (self.N, self.N), dtype=jnp.float64) * jnp.exp(1j * 2 * np.pi * jax.random.uniform(key_phase, (self.N, self.N), dtype=jnp.float64))
             self.iter = 0
             
             self.simulation_running = True
@@ -393,7 +392,7 @@ class FoxLiGUIJAX(QWidget):
         
         self.last_E_out = E_out_jax 
         
-        viz_utils.plot_iteration(self.sim_figure, onp.array(intensity_jax), onp.array(phase_jax), self.iter + 1)
+        viz_utils.plot_iteration(self.sim_figure, np.array(intensity_jax), np.array(phase_jax), self.iter + 1)
         self.sim_canvas.draw()
         
         self.iter += 1
@@ -403,13 +402,13 @@ class FoxLiGUIJAX(QWidget):
             print(f"Total time for {self.max_iter} iterations (including GUI rendering & delays): {sim_end_time - self.sim_start_time} seconds")
             self.simulation_running = False
             self.simulation_timer.stop()
-            self.last_E_out = onp.array(self.last_E_out)
+            self.last_E_out = np.array(self.last_E_out)
             QMessageBox.information(self, "Simulation Complete", f"{self.max_iter} iterations completed!")
             self.plot_results()
 
     def plot_results(self):
-        intensity = onp.abs(self.last_E_out)**2 * onp.array(self.circ0) * (1 - onp.array(self.circ2))
-        phase = onp.angle(self.last_E_out) * onp.array(self.circ0) * (1 - onp.array(self.circ2))
+        intensity = np.abs(self.last_E_out)**2 #* np.array(self.circ0) * (1 - np.array(self.circ2))
+        phase = np.angle(self.last_E_out) * np.array(self.circ0) * (1 - np.array(self.circ2))
         
         viz_utils.plot_final_results(self.result_figure, intensity, phase, self.N // 2)
         
@@ -424,14 +423,14 @@ class FoxLiGUIJAX(QWidget):
         M2, Dr, Drho, Dr_gauss, Drho_gauss, I_out, I_far, I_gauss, I_far_gauss = calc_far_field_jax(
             jnp.array(self.last_E_out), self.x, self.y, self.fx, self.fy, self.D1, self.D2, self.circ1, self.N)
 
-        viz_utils.plot_far_field(self.far_field_figure, onp.array(I_out), onp.array(I_gauss), onp.array(I_far), onp.array(I_far_gauss), self.N)
+        viz_utils.plot_far_field(self.far_field_figure, np.array(I_out), np.array(I_gauss), np.array(I_far), np.array(I_far_gauss), self.N)
         self.far_field_canvas.draw()
         
-        self.m2_label.setText(f"{onp.array(M2):.4f}")
-        self.dr_label.setText(f"{onp.array(Dr):.4e}")
-        self.drho_label.setText(f"{onp.array(Drho):.4f}")
-        self.dr_gauss_label.setText(f"{onp.array(Dr_gauss):.4e}")
-        self.drho_gauss_label.setText(f"{onp.array(Drho_gauss):.4f}")
+        self.m2_label.setText(f"{np.array(M2):.4f}")
+        self.dr_label.setText(f"{np.array(Dr):.4e}")
+        self.drho_label.setText(f"{np.array(Drho):.4f}")
+        self.dr_gauss_label.setText(f"{np.array(Dr_gauss):.4e}")
+        self.drho_gauss_label.setText(f"{np.array(Drho_gauss):.4f}")
 
         self.tabs.setCurrentWidget(self.tab_far_field)
 

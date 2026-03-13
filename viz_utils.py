@@ -28,7 +28,8 @@ def plot_setup(fig, M1_nom, M2_nom, M1_mis, M2_mis, circ1, circ2, raw_gain, exp_
     plot_phase_map(axs[3], M2_mis, "M2 Phase-Misaligned", circ2, fig)
 
     if raw_gain is not None:
-        im4 = ax_gain_raw.imshow(raw_gain/np.max(raw_gain), cmap='viridis', origin='lower', aspect='auto')
+        #im4 = ax_gain_raw.imshow(raw_gain/np.max(raw_gain), cmap='viridis', origin='lower', aspect='auto')
+        im4 = ax_gain_raw.imshow(raw_gain, cmap='viridis', origin='lower', aspect='auto')
         ax_gain_raw.set_title("2D Projected Cavity Gain Map (Scaled)", fontsize=8, fontweight='bold')
         fig.colorbar(im4, ax=ax_gain_raw)
     else:
@@ -36,7 +37,8 @@ def plot_setup(fig, M1_nom, M2_nom, M1_mis, M2_mis, circ1, circ2, raw_gain, exp_
         ax_gain_raw.set_title("2D Projected Cavity Gain Map", fontsize=8, fontweight='bold')
 
     if exp_gain is not None:
-        im5 = ax_gain_interp.imshow(exp_gain/np.max(exp_gain), cmap='viridis', origin='lower', aspect='auto')
+        #im5 = ax_gain_interp.imshow(exp_gain/np.max(exp_gain), cmap='viridis', origin='lower', aspect='auto')
+        im5 = ax_gain_interp.imshow(exp_gain, cmap='viridis', origin='lower', aspect='auto')
         ax_gain_interp.set_title("Final Transmission Multiplier (Exp)", fontsize=8, fontweight='bold')
         fig.colorbar(im5, ax=ax_gain_interp)
     else:
