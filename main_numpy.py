@@ -21,6 +21,9 @@ class FoxLiGUI(QWidget):
         self.showFullScreen()
         self.simulation_running = False
         self.gain_filepath = None
+        self.last_gain_filepath = None
+        self.last_N = None
+        self.last_p = None
         
         self.initUI()
 
@@ -299,14 +302,31 @@ class FoxLiGUI(QWidget):
                                                  xoff=self.x2, yoff=self.y2, angx=self.theta_x2, angy=self.theta_y2,
                                                  left_or_right_mirror="right", return_circ=True)
         
+        needs_reload = False
+        
+        if self.gain_filepath != self.last_gain_filepath:
+            needs_reload = True
+        if self.N != self.last_N or self.p != self.last_p:
+            needs_reload = True
+            
         if self.gain_combo.currentText() == "Load from File..." and self.gain_filepath:
-            time_start = time.perf_counter()
-            self.exp_gain_profile, self.raw_gain_profile = load_and_process_gain(self.gain_filepath, self.x, self.y)
-            time_end = time.perf_counter()
-            print(f"Time duration for processing gain: {time_end-time_start} seconds")
+            if needs_reload or not hasattr(self, 'exp_gain_profile'):
+                time_start = time.perf_counter()
+                
+                self.exp_gain_profile, self.raw_gain_profile = load_and_process_gain(self.gain_filepath, self.x, self.y)
+                
+                time_end = time.perf_counter()
+                print(f"Time duration for processing gain: {time_end-time_start:.2f} seconds")
+                
+                self.last_gain_filepath = self.gain_filepath
+                self.last_N = self.N
+                self.last_p = self.p
+            else:
+                print("Using cached gain profile. Skipping recalculation.")
         else:
             self.exp_gain_profile = np.ones((self.N, self.N))
             self.raw_gain_profile = None
+            self.last_gain_filepath = None
 
         amp = np.random.uniform(size=(self.N, self.N))
         phase = np.random.uniform(size=(self.N, self.N))
