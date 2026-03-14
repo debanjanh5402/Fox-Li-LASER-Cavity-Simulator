@@ -76,13 +76,13 @@ def plot_final_results(fig, intensity, phase, center_row):
 
     divider00 = make_axes_locatable(axs[0, 0])
     cax00 = divider00.append_axes("right", size="2%", pad=0.05)
-    im00 = axs[0, 0].imshow(intensity_norm, cmap='hot', interpolation='nearest')
+    im00 = axs[0, 0].imshow(intensity_norm, cmap='hot')
     axs[0, 0].set_title("Final Intensity", fontsize=12, fontweight='bold')
     fig.colorbar(im00, cax=cax00)
 
     divider01 = make_axes_locatable(axs[0, 1])
     cax01 = divider01.append_axes("right", size="2%", pad=0.05)
-    im01 = axs[0, 1].imshow(phase, cmap='jet', vmin=-np.pi, vmax=np.pi, interpolation='nearest')
+    im01 = axs[0, 1].imshow(phase, cmap='jet', vmin=-np.pi, vmax=np.pi)
     axs[0, 1].set_title("Final Phase", fontsize=12, fontweight='bold')
     fig.colorbar(im01, cax=cax01)
 
