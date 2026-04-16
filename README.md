@@ -19,5 +19,5 @@ Indian Institute of Technology, Delhi
 
 * **Prof. Kedar B. Khare**  
 Professor and Head, Optics & Photonics Centre (OPC)  
-Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (CeNSE)  
+Head, Centre for Sensors, Instrumentation and Cyber Physical System Engineering (SeNSE)  
 Indian Institute of Technology, Delhi
