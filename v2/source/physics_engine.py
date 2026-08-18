@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+import numpy as np
+from numpy.fft import fft2, ifft2, fftshift, ifftshift
+
+
+
+import jax.numpy as jnp
+from jax.numpy.fft import fft2 as jfft2
+from jax.numpy.fft import ifft2 as jifft2
+from jax.numpy.fft import fftshift as jfftshift
+from jax.numpy.fft import ifftshift as jifftshift
+
+def create_circle_jax(x_grid, y_grid, diameter, xoff=0.0, yoff=0.0):
+    r2 = (x_grid-xoff)**2 + (y_grid-yoff)**2
+    circ = jnp.where(r2 < (diameter/2)**2, 1.0, 0.0)
+    return circ
+            
+def create_mirror_jax(x_grid, y_grid, wav_num, 
+                      diameter, ROC, kappa, 
+                      xoff, yoff, angx, angy, 
+                      left_or_right_mirror:str, 
+                      return_circ:bool=False):
+    circ = create_circle_jax(x_grid, y_grid, diameter, xoff, yoff)
+                
+    if left_or_right_mirror.lower() == "left": 
+        factor = -1
+    elif left_or_right_mirror.lower() == "right": 
+        factor = +1
+    else: 
+        print(f"Wrong argument for left_or_right_mirror: {left_or_right_mirror}")
+
+    r2 = (x_grid-xoff)**2 + (y_grid-yoff)**2
+    sag_phase = factor * 2j * wav_num * r2 / (ROC + jnp.sqrt(ROC**2 - (1+kappa) * r2))
+    tilt = jnp.exp(1j* wav_num * (x_grid*angx + y_grid*angy))
+    mirror = jnp.exp(sag_phase) * tilt * circ
+
+    if return_circ: 
+        return circ, mirror
+    else:
+        return mirror
+
+
+def angspec_prop_jax(u, dz, k_sq, four_pi_sq, f_sq_sum, N, p, wav):
+    alpha = jnp.sqrt(k_sq - four_pi_sq * f_sq_sum) 
+    f0 = (1/wav) * 1/jnp.sqrt(1 + (2*dz/(N*p))**2)
+    LP = jnp.where(f_sq_sum <= f0**2, 1.0, 0.0)
+    H = jnp.exp(1j * dz * alpha) * LP
+    U = jfftshift(jfft2(jifftshift(u)))
+    return jfftshift(jifft2(jifftshift(U * H)))
+        
+
+def run_iteration_jax(E0, Mirror1, Mirror2, gain_profile, z, circ2, circ0, k_sq, four_pi_sq, f_sq_sum, N, p, wav):
+    E0 /= jnp.max(jnp.abs(E0[:]))
+    E0 = E0 * Mirror1
+    E0 = angspec_prop_jax(E0, z, k_sq, four_pi_sq, f_sq_sum, N, p, wav)
+    #E0 = E0 * gain_profile
+    E_out = E0 * (1 - circ2)
+    E0 = E0 * Mirror2
+    E0 = angspec_prop_jax(E0, z, k_sq, four_pi_sq, f_sq_sum, N, p, wav)
+    E0 = E0 * gain_profile
+        
+    intensity = jnp.abs(E_out)**2 #* circ0 * (1 - circ2)
+    phase = jnp.angle(E_out) * circ0 * (1 - circ2)
+        
+    return E0, E_out, intensity, phase
+
+
+def calc_far_field_jax(E_out, x, y, fx, fy, D1, D2, circ1, N):
+    I_out = jnp.abs(E_out)**2
+    E_far = jfftshift(jfft2(jifftshift(E_out)))
+    I_far = jnp.abs(E_far)**2
+        
+    total_power_out = jnp.sum(I_out)
+    x_c = jnp.sum(x * I_out) / total_power_out
+    y_c = jnp.sum(y * I_out) / total_power_out
+    r_c = jnp.sqrt(x_c**2 + y_c**2)
+    Dr = jnp.sum(((jnp.sqrt(x**2 + y**2) - r_c)**2 * I_out)) / total_power_out
+    total_power_far = jnp.sum(I_far)
+    fx_c = jnp.sum(fx * I_far) / total_power_far
+    fy_c = jnp.sum(fy * I_far) / total_power_far    
+    #f_c = jnp.sqrt(fx_c**2 + fy_c**2) * 0
+    #Drho = jnp.sum(((jnp.sqrt(fx**2 + fy**2) - f_c)**2) * I_far) / total_power_far
+    Drho = jnp.sum(((fx-fx_c)**2 + (fx-fy_c)**2) * I_far)/total_power_far
+
+
+    E_gauss = jnp.exp(-2.0 * (x**2 + y**2) / (D1 + D2)**2) * circ1
+    I_gauss = jnp.abs(E_gauss)**2
+    E_far_gauss = jfftshift(jfft2(jifftshift(E_gauss)))
+    I_far_gauss = jnp.abs(E_far_gauss)**2
+        
+    total_power_gauss = jnp.sum(I_gauss)
+    Dr_gauss = jnp.sum((x**2 + y**2) * I_gauss) / total_power_gauss
+    total_power_far_gauss = jnp.sum(I_far_gauss)
+    Drho_gauss = jnp.sum((fx**2 + fy**2) * I_far_gauss) / total_power_far_gauss
+
+    M2 = jnp.sqrt(Drho / Drho_gauss)
+    return M2, Dr, Drho, Dr_gauss, Drho_gauss, I_out, I_far, I_gauss, I_far_gauss

@@ -1,0 +1,58 @@
+================================================================================
+FOX-LI LASER CAVITY SIMULATOR
+
+Version 2
+Engine: JAX
+================================================================================
+SIMULATION REPORT
+================================================================================
+
+GENERAL PARAMETERS
+--------------------------------------------------------------------------------
+Grid Size (N)                  : 1501
+Wavelength (um)                : 1.315000
+Pixel Size (um)                : 20.000000
+Propagation Distance (m)       : 1.212352
+Number of Iterations           : 100
+
+MIRROR PARAMETERS
+--------------------------------------------------------------------------------
+Mirror-1 Radius of Curvature (m) : 5.83780440
+Mirror-2 Radius of Curvature (m) : 3.43780440
+Mirror-1 Diameter (mm)           : 20.000000
+Mirror-2 Diameter (mm)           : 11.000000
+Mirror-1 Conic Constant          : -1.000000
+Mirror-2 Conic Constant          : -1.033600
+
+MIRROR MISALIGNMENT
+--------------------------------------------------------------------------------
+Mirror-1
+    X Offset (um)             : 0.000000
+    Y Offset (um)             : 0.000000
+    X Tilt (urad)             : 0.000000
+    Y Tilt (urad)             : 0.000000
+
+Mirror-2
+    X Offset (um)             : 0.000000
+    Y Offset (um)             : 0.000000
+    X Tilt (urad)             : 0.000000
+    Y Tilt (urad)             : 0.000000
+
+GAIN INFORMATION
+--------------------------------------------------------------------------------
+Gain Mode                     : No Gain
+Gain File                     : None
+
+SIMULATION RESULTS
+--------------------------------------------------------------------------------
+M² Factor                     : 1.46262236
+Dr                            : 5.59606971e-05
+D_rho                         : 7.73732480e+05
+Dr (Gaussian)                 : 4.65386697e-05
+D_rho (Gaussian)              : 3.61681598e+05
+Total Simulation Time (s)      : 49.582
+Average Time / Iteration (s)   : 0.495816
+
+================================================================================
+End of Report
+================================================================================
