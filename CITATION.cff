@@ -1,4 +1,4 @@
-cff-version: 1.2.0
+cff-version: 1.0.0
 title: "Fox-Li LASER Cavity Simulator"
 message: >
   If you use this software in your research, please cite it using the metadata
@@ -16,28 +16,6 @@ authors:
 
 version: "1.0.0"
 date-released: 2026-07-15
-
-abstract: >
-  Fox-Li LASER Cavity Simulator is a graphical desktop application for
-  numerical simulation and analysis of optical laser resonators using the
-  Fox-Li iterative method. The repository provides both NumPy and JAX
-  implementations for CPU-based simulation and optional hardware-accelerated
-  execution on supported systems.
-
-keywords:
-  - laser
-  - optics
-  - Fox-Li
-  - resonator
-  - cavity
-  - Gaussian beam
-  - beam propagation
-  - numerical simulation
-  - NumPy
-  - JAX
-  - Python
-
-
 
 license: MIT
 
